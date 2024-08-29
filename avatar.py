@@ -135,6 +135,10 @@ def wav_to_numpy_float32(wav_byte: bytes) -> np.ndarray:
     # Convert the WAV audio bytes to a numpy array of float32 values
     return wav_byte.astype(np.float32, order='C') / 32768.0
 
+tts_engine = pyttsx4.init()
+voices = tts_engine.getProperty('voices')
+tts_engine.setProperty('voice', voices[1].id)
+
 def get_tts_numpy_audio(text: str) -> np.ndarray:
     """
     Generate Text-to-Speech (TTS) audio in WAV format and convert it to a numpy array of float32 values.
@@ -150,10 +154,10 @@ def get_tts_numpy_audio(text: str) -> np.ndarray:
     # Convert the TTS audio in mp3 format to WAV format and a numpy array of float32 values
     #wav_byte = tts_to_wav(mp3_byte)
 
-    engine = pyttsx4.init()
+    
     b = io.BytesIO()
-    engine.save_to_file(text, b)
-    engine.runAndWait()
+    tts_engine.save_to_file(text, b)
+    tts_engine.runAndWait()
     b.seek(0)
     bs=b.getvalue()
     

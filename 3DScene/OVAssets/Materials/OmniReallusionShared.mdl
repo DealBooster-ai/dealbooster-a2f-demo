@@ -1,0 +1,168 @@
+// Reallusion shared utilities
+
+mdl 1.6;
+
+import ::anno::*;
+import ::math::*;
+
+export enum RLBlendMode
+[[ 
+    anno::description("Blend map blend mode")
+]]
+{
+    blendmode_multiply = 0 [[ 
+        anno::display_name("multiply") 
+    ]],
+
+    blendmode_add = 1 [[ 
+        anno::display_name("add") 
+    ]],
+
+    blendmode_overlay = 2 [[ 
+        anno::display_name("overlay") 
+    ]]
+};
+
+export float3 BlendMapByMode( float3 blend_color, float3 base_color, float weight, RLBlendMode mode )
+{
+    float3 top = blend_color;
+    float3 bottom = base_color;
+
+    float3 op_result = top;
+        
+    switch (mode) {
+    case blendmode_multiply:
+        op_result *= bottom;
+        break;
+    case blendmode_add:
+        op_result += bottom;
+        break;
+
+    case blendmode_overlay:
+        {
+
+            float3 mul = base_color*blend_color;
+            float3 add = base_color+blend_color;
+            if (base_color.x >= .5) mul.x = add.x-mul.x-0.5;
+            if (base_color.y >= .5) mul.y = add.y-mul.y-0.5;
+            if (base_color.z >= .5) mul.z = add.z-mul.z-0.5;
+            op_result = mul+mul;
+        }
+        break;
+    }
+    return math::lerp( bottom, op_result, weight );
+}
+
+// [ Sx   0   0 ]   [  cosR   sinR   0 ]   [  1   0   Tx ]   [  SxcosR   SxsinR  Tx ]
+// [  0  Sy   0 ] * [ -sinR   cosR   0 ] * [  0   1   Ty ] = [ -SysinR   SycosR  Ty ]
+// [  0   0   1 ]   [     0      0   1 ]   [  0   0    1 ]   [       0        0   1 ]
+// CRenderKit::SetTextureMatrix
+export float3x3 GetUvFloat3x3( float2 kScale, float2 kTrans, float fRotate )
+{
+   	float fCos = math::cos( fRotate );
+    float fSin = math::sin( fRotate );
+    return float3x3 (
+		 kScale[0] * fCos, kScale[0] * fSin, kTrans[0],
+		-kScale[1] * fSin, kScale[1] * fCos, kTrans[1],
+		 0,                0,                1 );
+}
+
+export float2 TransformUV( float2 uv, float3x3 uvMatrix )
+{
+	float3 uvw = float3( uv[0], 1 - uv[1], 1 ) * uvMatrix;
+	return float2( uvw[0], 1 - uvw[1] );
+}
+
+// similiar to OmniShared::add_detail_normal, but always in tangent space
+export float3 BlendAngleCorrectedNormals( float3 BaseNormal, float3 SubNormal )
+{
+    float ZPlus1 = BaseNormal.z + 1;
+    float3 vBaseZPlus1 = float3( BaseNormal.x, BaseNormal.y, ZPlus1 );
+    float3 vSubFlipRG = float3( -SubNormal.x, -SubNormal.y, SubNormal.z );
+    float fDot = math::dot( vBaseZPlus1, vSubFlipRG );
+    return math::normalize( ( vBaseZPlus1 * fDot ) - ( ZPlus1 * vSubFlipRG ) );
+}
+
+export float CheapContrast( float In, float Contrast )
+{
+    return math::saturate( math::lerp( 0 - Contrast, Contrast + 1, In ) );
+}
+
+export float3 IcBlendOverlay( float3 a, float3 b )
+{
+	float3 vA = 2 * a * b;
+	float3 vB = float3(1,1,1) - 2*(float3(1,1,1)-a)*(float3(1,1,1)-b);
+	float f0 = ( a.x < 0.5 ) ? vA.x : vB.x;
+	float f1 = ( a.y < 0.5 ) ? vA.y : vB.y;
+	float f2 = ( a.z < 0.5 ) ? vA.z : vB.z;
+	return float3( f0, f1, f2 );
+}
+
+// Generic algorithm to desaturate images used in most game engines
+export float3 desaturate(float3 c, float factor)
+{
+	float3 lum = float3(0.299, 0.587, 0.114);
+	float3 gray = float3(math::dot(lum, c));
+	return float3(math::lerp(c, gray, factor));
+}
+
+// copy from Base.mdl
+export float saturation(color rgb)
+{
+    float max = math::max_value(rgb);
+    return (max != 0.0f) ? (1.0f - math::min_value(rgb)/max) : 0.0f;
+}
+
+// copy from Base.mdl
+export float hue(float3 rgb)
+{
+    float max = math::max_value(rgb);
+    float min = math::min_value(rgb);
+    float range = max - min;
+    float inv_range = 1.0f/range;
+
+    float hue = (range != 0.0f) ?
+        (1.0f/6.0f) * (                                     // 60.0/360.0
+        (max == rgb.x) ? ((rgb.y-rgb.z)*inv_range)          // R is max
+        : (max == rgb.y) ? (2.0f + (rgb.z-rgb.x)*inv_range) // G is max
+        : (4.0f + (rgb.x-rgb.y)*inv_range)                  // B is max
+        )
+
+        : 0.0f;                                             // hue is undefined (assume 0)
+
+    return (hue >= 0.0f) ? hue : (hue + 1.0f);
+}
+
+// copy from Base.mdl
+export float3 hsv_to_rgb(float3 hsv)
+{
+    // from "Color Imaging, Fundamentals and Applications", Reinhard et al., p. 442
+
+    // A hue of 1.0 is questionably valid, and needs to be interpreted as 0.0f
+    float h_prime = (hsv.x != 1.0f) ? hsv.x * 6.0f : 0.0f; // H * 360.0/60.0
+    float h_floor = math::floor(h_prime);
+    float f = h_prime - h_floor;
+    float zy = hsv.z*hsv.y;
+    float a = hsv.z - zy;
+    float b = hsv.z - zy*f;
+    float c = a + zy*f;
+
+    switch(int(h_floor))
+    {
+    default:
+
+        // fall through...
+    case 0:
+        return float3(hsv.z, c, a);
+    case 1:
+        return float3(b, hsv.z, a);
+    case 2:
+        return float3(a, hsv.z, c);
+    case 3:
+        return float3(a, b, hsv.z);
+    case 4:
+        return float3(c, a, hsv.z);
+    case 5:
+        return float3(hsv.z, a, b);
+    }
+}

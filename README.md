@@ -19,6 +19,16 @@ Source code of this bot could be found in the [dealbooster-ll-bot repo](https://
 
 # Prepare and run
 
+## Pulling the project
+To pull the project you'll need Git LFS, as there are huge 3D assets.
+Follow [Installing Git LFS Guide](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage).
+
+Then you can pull the project
+```(bash)
+git clone git@github.com:DealBooster-ai/dealbooster-a2f-demo.git
+```
+Or just [download](https://github.com/DealBooster-ai/dealbooster-a2f-demo/archive/refs/heads/main.zip) it as archive from github.
+
 ## NVIDIA Audio2Face installation
 ### Download and Install Omniverse Launcher
 [NVIDIA Omniverse](https://docs.omniverse.nvidia.com/prod_install-guide/prod_install-guide.html) is a development platform for 3D simulation and design collaboration, it is free for individual, you can download Omniverse Launcher [here](https://www.nvidia.com/en-us/omniverse/download/).
@@ -70,7 +80,8 @@ Set-ExecutionPolicy Unrestricted -Scope Process
 ### Open Audio2Face scene
 1. Open Omniverse Launcher
 2. Run Audio2Face application
-3. In the content section, navigate to this folder and open AvatarStreaming.usd
+3. In the content section, navigate to ./3DScene folder and open AvatarStreaming.usd
+4. Once the scene is loaded, press play button to run the animation
 
 ### Launch the python app
 1. Open PowerShell

@@ -3,6 +3,7 @@ secrets/*secret*
 tokens/token*
 data
 .idea/
+*.ccProject
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -134,6 +135,8 @@ ENV/
 env.bak/
 venv.bak/
 .vscode
+
+.thumbs
 
 # Spyder project settings
 .spyderproject
