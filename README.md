@@ -51,10 +51,13 @@ Once you got Omniverse Launcher installed, you can immediate access to all the a
 | *Omniverse Audio2Face* |
 
 
+## Install ffmpeg
+For local voice synthesis you need to [install ffmpeg](https://phoenixnap.com/kb/ffmpeg-windows).
+
 ## Python instllation and setup
 
 ### Install Python 3.8
-Download for windows.
+[Download Python 3.8 for Windows](https://apps.microsoft.com/detail/9mssztt1n39l?rtc=1&hl=en-us).
 Install and reboot the system.
 Test it by runnig this commain in PowerShell:
 ```(bash)
