@@ -3,6 +3,7 @@ import os, sys, contextlib
 import numpy as np
 import speech_recognition as sr
 from gtts import gTTS
+import requests
 
 from pydub import AudioSegment
 from scipy.io.wavfile import read, write
@@ -13,6 +14,9 @@ import audio2face_pb2_grpc
 import grpc
 from audio2face_streaming_utils import push_audio_track
 import pyttsx4
+
+ACTIVE_AT_START = True
+BACKEND_HOST = "http://18.156.128.185"
 
 @contextlib.contextmanager
 def ignoreStderr():
@@ -28,7 +32,14 @@ def ignoreStderr():
         os.close(old_stderr)
 
 
-def ask_chatGPT(request_history):
+def ask_backend(request_history):
+    
+    resp = requests.post(BACKEND_HOST + "/api/chat", json=request_history)
+
+    yield resp.text
+
+
+def ask_openai(request_history):
     from openai import OpenAI
     """
     Generate and yield complete sentences from the output of the chatbot.
@@ -42,7 +53,7 @@ def ask_chatGPT(request_history):
     openai = OpenAI(
         api_key=os.environ.get('OPEN_AI_KEY')
     )
-    messages_history = [{"role": "system", "content": "You are a sales trainig avatar named Donald. A sales representative talk to you. \
+    messages_history = [{"role": "system", "content": "You are a sales trainig avatar named Mary. A sales representative talk to you. \
                          You play as a customer. Make it tricky for the seales rep, reply with concerns, tricky questions, etc.\
                          Not more then one concern or question per reply. Reply concise and short as it is a fluent dialog. One-or two sentencies."}]
     messages_history = messages_history + request_history
@@ -210,7 +221,7 @@ a2f_url = f'{default_url}:{port}'
 
 dialog_history = []
 
-active = True
+active = ACTIVE_AT_START
 
 with ignoreStderr():
     with sr.Microphone() as source:
@@ -222,21 +233,21 @@ with ignoreStderr():
             is_valid_input, _input = speech_to_text(audio)
             if is_valid_input:
                 print("User : ", _input)
-                if _input == "goodbye Donald":
+                if _input == "goodbye Mary":
                     active = False
                     make_avatar_speaks("It was pleasure to talk to you!")
                     dialog_history = []
                 if active:  
                     print("User : ", _input)
                     dialog_history.append({"role": "user", "content": _input})
-                    for sentence in ask_chatGPT(dialog_history):
+                    for sentence in ask_backend(dialog_history):
                         print("Avatar : ", sentence)
                         dialog_history.append({"role": "assistant", "content": sentence}) 
                         make_avatar_speaks(sentence)
-                if active == False and _input == "hello Donald":
+                if active == False and _input == "hello Mary":
                     active = True
                     make_avatar_speaks("Hello! My Name is Donald. You can try to sell something to me.")
-                    dialog_history.append({"role": "assistant", "content": "Hello! My Name is Donald. You can try to sell something to me."})
+                    dialog_history.append({"role": "assistant", "content": "Hello! My Name is Mary. You can try to sell something to me."})
 
             else:
                 if _input is sr.RequestError:

@@ -104,7 +104,30 @@ If you have 2 displays, you may see speech output inthe power shell window on on
 
 To have a full-screen 3D avatr, press F11.
 
-You can use OBS Virtual Camera to show the avatar in Zoom or google meet.
+You can use [OBS Studio](https://obsproject.com/) to make [Virtual Camera that shows the avatar in Zoom](https://www.youtube.com/watch?v=Ki9E8mxsXRI&t=2s) or Google Meet.
+
+With [VB-Cable A+B](https://shop.vb-audio.com/en/win-apps/12-vb-cable-ab.html?SubmitCurrency=1&id_currency=1) you can connect you computer's audio input and output to Zoom or Google Meet.
+
+As follows:
+
+* Zoom Microphone Device: CABLE-A Output
+* Zoom Speaker Device: CABLE-B Input
+* System Input Sound Device: CABLE-B Output
+* System Output Sound Device: CABLE-A Input
+
+**System Sound Setup:**
+
+![System Sound Setup](https://github.com/DealBooster-ai/dealbooster-a2f-demo/blob/main/imgs/system-sound-setup.png?raw=true)
+
+**Zoom Setup:**
+
+![Zoom Setup](https://github.com/DealBooster-ai/dealbooster-a2f-demo/blob/main/imgs/zoom-sound-setup.png?raw=true)
+
+**Google Meet Setup:**
+
+![Meet Setup](https://github.com/DealBooster-ai/dealbooster-a2f-demo/blob/main/imgs/meet-sound-setup.png?raw=true)
+
+As result your avatra will act as a real agent. You just need to join a call for it.
 
 **That's it! Good luck!**
 #
