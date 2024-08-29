@@ -1,0 +1,11 @@
+numpy
+protobuf <= 3.20.x
+grpcio
+soundfile
+SpeechRecognition
+gtts
+pydub
+scipy
+pyttsx4
+PyAudio
+openai
