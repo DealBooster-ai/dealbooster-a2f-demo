@@ -15,8 +15,8 @@ import time
 import numpy as np
 import soundfile
 
-import audio2face_pb2
-import audio2face_pb2_grpc
+from . import audio2face_pb2
+from . import audio2face_pb2_grpc
 
 
 def push_audio_track(url, audio_data, samplerate, instance_name):
@@ -61,15 +61,16 @@ def push_audio_track_stream(url, audio_data, samplerate, instance_name):
     All messages are packed into a Python generator and passed to PushAudioStream()
     """
 
+    url = "localhost:50051"
+    instance_name = "/World/audio2face/PlayerStreaming"
+
     chunk_size = samplerate // 10  # ADJUST
-    sleep_between_chunks = 0.04  # ADJUST
+    sleep_between_chunks = 0.05  # ADJUST
     block_until_playback_is_finished = True  # ADJUST
 
     with grpc.insecure_channel(url) as channel:
-        print("Channel creadted")
         stub = audio2face_pb2_grpc.Audio2FaceStub(channel)
-
-        def make_generator():
+        def make_generator():                    
             start_marker = audio2face_pb2.PushAudioRequestStart(
                 samplerate=samplerate,
                 instance_name=instance_name,
@@ -77,17 +78,22 @@ def push_audio_track_stream(url, audio_data, samplerate, instance_name):
             )
             # At first, we send a message with start_marker
             yield audio2face_pb2.PushAudioStreamRequest(start_marker=start_marker)
-            # Then we send messages with audio_data
+            #Send the file path to UE; UE Downloads and plays
+            #You could send a signal earlier to download and send here signal to play
+            #but with the files being small its fast for me
+                               
             for i in range(len(audio_data) // chunk_size + 1):
                 time.sleep(sleep_between_chunks)
                 chunk = audio_data[i * chunk_size : i * chunk_size + chunk_size]
                 yield audio2face_pb2.PushAudioStreamRequest(audio_data=chunk.astype(np.float32).tobytes())
 
         request_generator = make_generator()
-        print("Sending audio data...")
+        #print("Sending audio data...")
+        # Then we send messages with audio_data
         response = stub.PushAudioStream(request_generator)
         if response.success:
-            print("SUCCESS")
+            #print("SUCCESS")                    
+            pass
         else:
             print(f"ERROR: {response.message}")
     print("Channel closed")
