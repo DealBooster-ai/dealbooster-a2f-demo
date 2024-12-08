@@ -1,9 +1,12 @@
 from . import IAvatarBrians, Utterance, Phrase, EnhancedJSONEncoder
 import requests
+import uuid
 
 class DifyBrains(IAvatarBrians):
 
     completion_client = None
+
+    conversation_id = ""
    
     def __init__(self, api_key, endpoint = "http://localhost/v1"):
         self.api_key = api_key
@@ -16,7 +19,7 @@ class DifyBrains(IAvatarBrians):
             "inputs": {},
             "query": user_utterance,
             "response_mode": "blocking",
-            "conversation_id": "",
+            "conversation_id": self.conversation_id,
             "user": "abc-123",
         }
         headers = {
@@ -26,6 +29,7 @@ class DifyBrains(IAvatarBrians):
         response = requests.post(url=f'{self.endpoint}/chat-messages', headers=headers, json=payload)
 
         response_text = response.json().get('answer')
+        self.conversation_id = response.json().get("conversation_id")
         response_array = response_text.split()
         output_array = []
         s = ''
