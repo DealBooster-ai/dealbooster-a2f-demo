@@ -1,25 +1,19 @@
-import whisper, os
 import numpy as np
 from scipy.io.wavfile import write
 import platform
 import torch
 import speech_recognition as sr
-import io
-import os
 from .. import IASR
 from transformers import pipeline
 
 
-Model = 'tiny'     # Whisper model size (tiny, base, small, medium, large)
-English = True      # Use English-only model?
-Translate = False   # Translate non-English to English?
-SampleRate = 16000  # Stream device recording frequency
-BlockSize = 200      # Block size in milliseconds
-Threshold = 0.1     # Minimum volume threshold to activate listening
+SampleRate = 16000
 Vocals = [50, 1000] # Frequency range to detect sounds that could be speech
 EndBlocks = 10      # Number of blocks to wait before sending to Whisper
+BlockSize = 200      # Block size in milliseconds
+Threshold = 0.1     # Minimum volume threshold to activate listening
 
-class LocalWhisperASR(IASR):
+class WhisperHF(IASR):
 
     english : bool
 
@@ -30,10 +24,9 @@ class LocalWhisperASR(IASR):
 
     '''
     Parameners:
-        model (str): Whisper model size ('tiny', 'base', 'small', 'medium', 'large-v1', 'large-v2', 'large-v3', 'large', 'large-v3-turbo', 'turbo')
-        english (bool): Use English-only model?
+        model (str): hugging face model, like 'openai/whisper-base', 'whitemouse84/whisper-base-ru', etc.
     '''
-    def __init__(self, model='base', english = True):
+    def __init__(self, model='openai/whisper-base'):
         self.running = True
         self.padding = 0
         self.prevblock = self.buffer = np.zeros((0,1))
@@ -49,24 +42,11 @@ class LocalWhisperASR(IASR):
             device = "cpu"
         else:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        model_root = '~/.cache/whisper'
-        model_root = os.path.expanduser(model_root)
-        #model_root = "D:/"
-        #self.model = whisper.load_model(f'{self.model}{".en" if self.english else ""}').to(device)
         
-        if (model != "large" and model != "large-v2" and model!= "large-v3") and english:
-            model = model + ".en"
-        self.model = whisper.load_model(model, download_root=model_root).to(device)
-
-        self.asr_pipeline = pipeline("automatic-speech-recognition", model="whitemouse84/whisper-base-ru", device='cuda')
+        self.asr_pipeline = pipeline("automatic-speech-recognition", model=model, device=device)
 
         print("\033[90m Done.\033[0m")
 
-
-    def __preprocess(self, data):
-        return np.frombuffer(data, np.int16).flatten().astype(np.float32) / 32768.0
-        
 
     def callback(self, indata, frames, time, status):
         #if status: print(status) # for debugging, prints stream errors.
@@ -88,32 +68,25 @@ class LocalWhisperASR(IASR):
             print('x', end='', flush=True)
             if self.padding > 1:
                 self.buffer = np.concatenate((self.buffer, indata))
-            elif self.padding < 1 < self.buffer.shape[0] > SampleRate: # if enough silence has passed, write to file.
+            elif self.padding < 1 < self.buffer.shape[0] > SampleRate: 
                 self.fileready = True
-                write('dictate-tmp.wav', SampleRate, self.buffer) # I'd rather send data to Whisper directly..
+                write('dictate-tmp.wav', SampleRate, self.buffer) 
                 self.recorded = self.buffer.copy()
                 self.buffer = np.zeros((0,1))
                 #self.running = False
-            elif self.padding < 1 < self.buffer.shape[0] < SampleRate: # if recording not long enough, reset buffer.
+            elif self.padding < 1 < self.buffer.shape[0] < SampleRate: 
                 self.buffer = np.zeros((0,1))
                 print("o", end='', flush=True)
             else:
-                self.prevblock = indata.copy() #np.concatenate((self.prevblock[-int(SampleRate/10):], indata)) # SLOW
+                self.prevblock = indata.copy() 
                 print("z", end='', flush=True)
 
     def process(self):
         if self.fileready:
             print("\n\033[90mTranscribing..\033[0m")
-            #result = self.model.transcribe('dictate-tmp.wav',fp16=False,language='en' if English else '',task='translate' if Translate else 'transcribe', initial_prompt="Hello! Hmm... Umm.. How are you? (cough) Nice to see you.")
             result = self.asr_pipeline('dictate-tmp.wav')
-            '''b = io.BytesIO()
-            write(b, SampleRate, self.recorded)
-            audio = sr.AudioData(self.recorded,SampleRate,2).get_raw_data()
-            audio_data = self.__preprocess(audio)
-            result = self.model.transcribe(b,language='en' if English else '',task='translate' if Translate else 'transcribe',suppress_tokens="")'''
             self.recorded = np.zeros((0,1))
             print(f"\033[1A\033[2K\033[0G{result['text']}")
-            #if self.asst.analyze != None: self.asst.analyze(result['text'])
             if self._input_handler != None:
                 self._input_handler(result['text'])
             self.fileready = False
@@ -124,15 +97,3 @@ class LocalWhisperASR(IASR):
         import sounddevice as sd
         with sd.InputStream(channels=1, callback=self.callback, blocksize=int(SampleRate * BlockSize / 1000), samplerate=SampleRate):
             while self.running: self.process()
-
-def main():
-    try:
-        handler = LocalWhisperASR()
-        handler.run()
-    except (KeyboardInterrupt, SystemExit): pass
-    finally:
-        print("\n\033[93mQuitting..\033[0m")
-        if os.path.exists('dictate-tmp.wav'): os.remove('dictate-tmp.wav')
-
-if __name__ == '__main__':
-    main() 

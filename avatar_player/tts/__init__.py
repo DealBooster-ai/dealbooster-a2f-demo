@@ -19,3 +19,10 @@ class TTSInterface:
         """
       
         return None
+    
+    @abstractmethod
+    def sample_rate(self) -> int:
+        """
+        Returns sample rate for Audio2Face
+        """
+        return 22050

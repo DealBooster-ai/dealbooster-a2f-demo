@@ -1,0 +1,1 @@
+call .venv\Scripts\activate & python .\avatar.py

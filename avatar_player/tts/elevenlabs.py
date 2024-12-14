@@ -73,3 +73,6 @@ class ElevenLabs(TTSInterface):
             print(e)
 
         return wav_to_numpy_float32(wav_byte)
+    
+    def sample_rate(self):
+        return 22050

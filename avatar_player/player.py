@@ -7,7 +7,7 @@ from .avatar_brains import IAvatarBrians
 from avatar_player.emotion_changer import EmotionChanger
 from .asr import IASR
 import queue
-import soundfile as sf
+
 import threading
 import numpy as np
 import requests
@@ -48,62 +48,15 @@ class AvatarPlayer:
 
         def text_que():
             while True:
-                ELEVENLABS_API_KEY = os.environ['ELEVENLABS_API_KEY']
-                voice_id = '21m00Tcm4TlvDq8ikWAM'
-                text_que = self.audio_tasks_queue.get()
-
-                CHUNK_SIZE = 4096
-                url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"  
-                
-                headers = {
-                    "Accept": "audio/mpeg",
-                    "Content-Type": "application/json",
-                    "xi-api-key": ELEVENLABS_API_KEY
-                }
-
-                data = {
-                    "text": text_que,
-                    "model_id": "eleven_monolingual_v1",
-                    "voice_settings": {
-                        "stability": 0.5,
-                        "similarity_boost": 0.5,
-                        "use_speaker_boost": True
-                    }
-                }
-
-                #file_path = f"C:\\audio\\output{int(time.time())}.mp3"
-
-                # Updated the file path for cross-platform compatibility
-                file_dir = os.path.join(os.path.expanduser("~"), "audio")
-                if not os.path.exists(file_dir):
-                    os.makedirs(file_dir)
-                file_path = os.path.join(file_dir, f"output{int(time.time())}.mp3")
-
-                response = requests.post(url, json=data, headers=headers)
-
-                if response.status_code == 200:
-                    with open(file_path, 'wb') as f:
-                        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                            f.write(chunk)
-                    print(f"File saved to {file_path}")
-                    #SendToATF(file_path) # add another que to send
-                    self.send_to_atf_queue.put(file_path)
-                else:
-                    print("Failed to generate speech. Status code:", response.status_code)
-                    print("Response:", response.text)
-                
-                # Mark the task as done
+                text = self.audio_tasks_queue.get()
+    
+                self.send_to_atf_queue.put(self.tts_engine.get_full_audio(text))
                 self.audio_tasks_queue.task_done()
 
         def send_to_atf_worker():
             while True:
                 a2f_que = self.send_to_atf_queue.get()
-                audio_data, samplerate = sf.read(a2f_que, dtype='float32')
-                print(samplerate)
-                if len(audio_data.shape) > 1:
-                    audio_data = np.mean(audio_data, axis=1) 
-                push_audio_track(self.a2f_grpc_url, audio_data, samplerate, self.a2f_player_instance)
-                os.remove(a2f_que)
+                push_audio_track(self.a2f_grpc_url, a2f_que, self.tts_engine.sample_rate(), self.a2f_player_instance)
                 self.send_to_atf_queue.task_done()
 
         audio_worker_thread = threading.Thread(target=text_que)
