@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 class IASR():
 
-    def __init__(self):
+    def __init__(self, device_id = None):
         pass
     
     @abstractmethod

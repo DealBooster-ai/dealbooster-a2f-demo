@@ -6,7 +6,7 @@ from . import IASR
 
 class GoogleASR(IASR):
 
-    def __init__(self) -> None:
+    def __init__(self, device_id = None) -> None:
         pass
 
 

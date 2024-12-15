@@ -26,12 +26,13 @@ class WhisperHF(IASR):
     Parameners:
         model (str): hugging face model, like 'openai/whisper-base', 'whitemouse84/whisper-base-ru', etc.
     '''
-    def __init__(self, model='openai/whisper-base'):
+    def __init__(self, device_id = None, model='openai/whisper-base'):
         self.running = True
         self.padding = 0
         self.prevblock = self.buffer = np.zeros((0,1))
         self.fileready = False
         self.recorded = np.zeros((0, 1))
+        self.device_id = device_id
         print("\033[96mLoading Whisper Model..\033[0m", end='', flush=True)
 
         device = 'cuda'
@@ -95,5 +96,5 @@ class WhisperHF(IASR):
         self._input_handler = input_handler
         print("\033[32mListening.. \033[37m(Ctrl+C to Quit)\033[0m")
         import sounddevice as sd
-        with sd.InputStream(channels=1, callback=self.callback, blocksize=int(SampleRate * BlockSize / 1000), samplerate=SampleRate):
+        with sd.InputStream(channels=1, callback=self.callback, blocksize=int(SampleRate * BlockSize / 1000), samplerate=SampleRate, device=self.device_id):
             while self.running: self.process()

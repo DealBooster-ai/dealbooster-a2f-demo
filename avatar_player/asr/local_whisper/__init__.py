@@ -33,7 +33,7 @@ class LocalWhisperASR(IASR):
         model (str): Whisper model size ('tiny', 'base', 'small', 'medium', 'large-v1', 'large-v2', 'large-v3', 'large', 'large-v3-turbo', 'turbo')
         english (bool): Use English-only model?
     '''
-    def __init__(self, model='base', english = True):
+    def __init__(self, device_id = None, model='base', english = True):
         self.running = True
         self.padding = 0
         self.prevblock = self.buffer = np.zeros((0,1))

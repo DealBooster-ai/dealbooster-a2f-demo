@@ -36,7 +36,7 @@ class AvatarPlayer:
         self.tts_engine = tts_engine
         self.brain = brain
         self.asr = asr
-        self.emotion_changer = EmotionChanger(a2f_host=a2f_host) if emotion_changer is None else emotion_changer
+        self.emotion_changer = emotion_changer #EmotionChanger(a2f_host=a2f_host) if emotion_changer is None else emotion_changer
         self.activation_phrase = activation_phrase
         self.deactivation_phrase = deactivation_phrase
         self.hello_message = hello_message
