@@ -38,7 +38,8 @@ class ElevenLabsMultilingual(TTSInterface):
                 "stability": 0.5,
                 "similarity_boost": 0.5,
                 "use_speaker_boost": True
-            }
+            },
+            "output_format": "mp3_22050_32"
         }
 
         file_dir = os.path.join(os.path.expanduser("~"), "audio")
@@ -55,9 +56,9 @@ class ElevenLabsMultilingual(TTSInterface):
             print(f"File saved to {file_path}")
             audio_data, samplerate = sf.read(file_path, dtype='float32')
             if len(audio_data.shape) > 1:
-                    audio_data = np.mean(audio_data, axis=1)
+                audio_data = np.mean(audio_data, axis=1)
             os.remove(file_path)
-            return audio_data
+            return audio_data          
         else:
             print("Failed to generate speech. Status code:", response.status_code)
             print("Response:", response.text)

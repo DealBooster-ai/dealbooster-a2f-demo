@@ -56,7 +56,7 @@ class AvatarPlayer:
         def send_to_atf_worker():
             while True:
                 a2f_que = self.send_to_atf_queue.get()
-                push_audio_track(self.a2f_grpc_url, a2f_que, self.tts_engine.sample_rate(), self.a2f_player_instance)
+                push_audio_track_stream(self.a2f_grpc_url, a2f_que, self.tts_engine.sample_rate(), self.a2f_player_instance)
                 self.send_to_atf_queue.task_done()
 
         audio_worker_thread = threading.Thread(target=text_que)

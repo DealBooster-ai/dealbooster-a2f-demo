@@ -83,7 +83,7 @@ def push_audio_track_stream(url, audio_data, samplerate, instance_name):
             #but with the files being small its fast for me
                                
             for i in range(len(audio_data) // chunk_size + 1):
-                time.sleep(sleep_between_chunks)
+                #time.sleep(sleep_between_chunks)
                 chunk = audio_data[i * chunk_size : i * chunk_size + chunk_size]
                 yield audio2face_pb2.PushAudioStreamRequest(audio_data=chunk.astype(np.float32).tobytes())
 
