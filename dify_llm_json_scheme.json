@@ -1,0 +1,20 @@
+{
+    "name": "emotional_answer_schema",
+    "description": "Emotional answer for the avatar",
+    "strict": true,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "text": {
+                "type": "string",
+                "description": "Text answer to the user's input"
+            },
+            "emotion": {
+                "type": "string",
+                "description": "Emotion related to teh answer. If is one of follows: neutral, amazement, anger, cheekness, disgust, fear, grief, joy, outofbreach, pain, sadness"
+            }
+        },
+        "required": ["text", "emotion"],
+        "additionalProperties": false
+    }
+}

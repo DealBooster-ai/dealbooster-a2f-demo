@@ -7,11 +7,13 @@ from .avatar_brains import IAvatarBrians
 from avatar_player.emotion_changer import EmotionChanger
 from .asr import IASR
 import queue
+from . omniverse_client.audio2face_rest_utils import pause_a2f
 
 import threading
 import numpy as np
 import requests
 import time
+
 
 
 
@@ -46,8 +48,9 @@ class AvatarPlayer:
         self.a2f_sample_rate = a2f_sample_rate
         self.a2f_player_instance = a2f_player_instance
         self.a2f_grpc_url = f'{a2f_host}:{a2f_grpc_port}'
+        self.a2f_host = a2f_host
         if emotion_changer is None:
-            self.emotion_changer = EmotionChanger()
+            self.emotion_changer = EmotionChanger(a2f_host=a2f_host)
 
 
         def text_que():
@@ -55,6 +58,8 @@ class AvatarPlayer:
                 message = self.audio_tasks_queue.get()
                 text = message.get('text')
                 audio_data = self.tts_engine.get_full_audio(text)
+                if not self.sentence_chunking:
+                    self.emotions_queue.put(message.get('emotion'))
                 self.send_to_atf_queue.put({'audio': audio_data, 'emotion': message.get('emotion')})
                 self.audio_tasks_queue.task_done()
 
@@ -62,8 +67,12 @@ class AvatarPlayer:
             while True:
                 a2f_que = self.send_to_atf_queue.get()
                 audio_data = a2f_que.get('audio')
+                if self.sentence_chunking:
+                    self.emotions_queue.put(a2f_que.get('emotion'))
+                else:
+                    self.emotions_queue.put(a2f_que.get('emotion'))
                 push_audio_track_stream(self.a2f_grpc_url, audio_data, self.tts_engine.sample_rate(), self.a2f_player_instance)
-                self.emotions_queue.put(a2f_que.get('emotion'))
+                #push_audio_track(self.a2f_grpc_url, audio_data, self.tts_engine.sample_rate(), self.a2f_player_instance)             
                 self.send_to_atf_queue.task_done()
 
         def send_emotion():
@@ -110,6 +119,7 @@ class AvatarPlayer:
             self.make_avatar_speaks(self.goodbye_message)
             self.brain.clear_history()
         if self.active: 
+            self.talking_depth = 3
             if self.sentence_chunking:
                 for sentence, emotion in self.brain.generate_reply(_input):
                     print("Avatar : ", sentence)
@@ -130,8 +140,15 @@ class AvatarPlayer:
             self.active = True
             self.make_avatar_speaks(self.hello_message)
 
+    talking_depth = 0
+
+    def _handle_asr_talk(self):
+        self.talking_depth = self.talking_depth - 1
+        #if self.talking_depth == 0:
+            #pause_a2f(f'http://{self.a2f_host}:8011')
+
 
     def run(self):
-        self.asr.run(self._handle_asr_input)
+        self.asr.run(self._handle_asr_input, self._handle_asr_talk)
 
         

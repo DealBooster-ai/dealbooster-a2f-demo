@@ -8,7 +8,7 @@ class EmotionChanger:
 
     current_emotion = []
     target_emotion = []
-    emotion_step = 0.2
+    emotion_step = 0.3
     delta_time = 0.05
 
     EMOTIONS = {
@@ -34,6 +34,7 @@ class EmotionChanger:
                     if np.linalg.norm(current_emo - target_emo) < self.emotion_step:
                         self.current_emotion = self.target_emotion
                         current_emo = target_emo
+                        self.pool.apply_async(set_emotion, args=[self.a2f_url, self.a2f_instance, self.target_emotion])
                     if np.count_nonzero(current_emo - target_emo) != 0:
                         current_emo = current_emo + np.sign(target_emo - current_emo) * self.emotion_step
                         self.current_emotion = current_emo.tolist()

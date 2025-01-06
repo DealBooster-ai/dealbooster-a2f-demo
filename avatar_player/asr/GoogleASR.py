@@ -10,7 +10,7 @@ class GoogleASR(IASR):
         pass
 
 
-    def run(self, input_handler):
+    def run(self, input_handler, start_talking_handler = None):
         self.asr = sr.Recognizer()
 
         @contextlib.contextmanager

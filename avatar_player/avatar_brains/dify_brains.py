@@ -1,6 +1,7 @@
 from . import IAvatarBrians, Utterance, Phrase, EnhancedJSONEncoder
 import requests
 import uuid
+import json
 
 class DifyBrains(IAvatarBrians):
 
@@ -8,9 +9,10 @@ class DifyBrains(IAvatarBrians):
 
     conversation_id = ""
    
-    def __init__(self, api_key, endpoint = "http://localhost/v1"):
+    def __init__(self, api_key, endpoint = "http://localhost/v1", emotions=True):
         self.api_key = api_key
         self.endpoint = endpoint
+        self.emotions = emotions
         return super().__init__()
 
  
@@ -28,7 +30,17 @@ class DifyBrains(IAvatarBrians):
         }
         response = requests.post(url=f'{self.endpoint}/chat-messages', headers=headers, json=payload)
 
+
+        emotion = 'neutral'
         response_text = response.json().get('answer')
+        if self.emotions:
+            try:
+                answer = json.loads(response_text)
+                response_text = answer['text']
+                emotion = answer['emotion']
+            except json.JSONDecodeError as e:
+                print('No emotion is provided by the LLM')
+
         self.conversation_id = response.json().get("conversation_id")
         response_array = response_text.split()
         output_array = []
@@ -41,4 +53,4 @@ class DifyBrains(IAvatarBrians):
             else:
                 s = s + ' ' + word                
         for sentence in output_array:       
-            yield sentence, "neutral"
+            yield sentence, emotion

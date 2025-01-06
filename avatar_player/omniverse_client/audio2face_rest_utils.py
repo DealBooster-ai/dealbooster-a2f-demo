@@ -29,3 +29,17 @@ def get_emotion(host, a2f_instane):
 
     response = requests.post(url, headers=headers, data=json.dumps(payload))
     return response.json()['result']
+
+
+def pause_a2f(host, a2f_player = '/World/audio2face/PlayerStreaming'):
+    url = f'{host}/A2F/Player/Pause'
+    headers = {
+        'accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
+    payload = {
+        "a2f_player": a2f_player
+    }
+
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    return response

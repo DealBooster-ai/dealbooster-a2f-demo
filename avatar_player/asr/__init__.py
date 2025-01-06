@@ -6,5 +6,5 @@ class IASR():
         pass
     
     @abstractmethod
-    def run(self, input_handler):
+    def run(self, input_handler, start_talking_handler = None):
         pass

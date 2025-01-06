@@ -118,7 +118,7 @@ class LocalWhisperASR(IASR):
                 self._input_handler(result['text'])
             self.fileready = False
 
-    def run(self, input_handler = None):
+    def run(self, input_handler = None, start_talking_handler = None):
         self._input_handler = input_handler
         print("\033[32mListening.. \033[37m(Ctrl+C to Quit)\033[0m")
         import sounddevice as sd

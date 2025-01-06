@@ -18,6 +18,7 @@ class WhisperHF(IASR):
     english : bool
 
     _input_handler = None
+    _talk_handler = None
 
     asr_pipeline = None
 
@@ -61,6 +62,8 @@ class WhisperHF(IASR):
         #zero_crossing_rate = np.sum(np.abs(np.diff(np.sign(indata)))) / (2 * indata.shape[0]) # threshold 20
         freq = np.argmax(np.abs(np.fft.rfft(indata[:, 0]))) * SampleRate / frames
         if np.sqrt(np.mean(indata**2)) > Threshold and Vocals[0] <= freq <= Vocals[1]:
+            if self._talk_handler:
+                self._talk_handler()
             print('.', end='', flush=True)
             #if self.padding < 1: self.buffer = self.prevblock.copy()
             self.buffer = np.concatenate((self.buffer, indata))
@@ -93,8 +96,9 @@ class WhisperHF(IASR):
                 self._input_handler(result['text'])
             self.fileready = False
 
-    def run(self, input_handler = None):
+    def run(self, input_handler = None, talking_handler = None):
         self._input_handler = input_handler
+        self._talk_handler = talking_handler
         print("\033[32mListening.. \033[37m(Ctrl+C to Quit)\033[0m")
         import sounddevice as sd
         with sd.InputStream(channels=1, callback=self.callback, blocksize=int(SampleRate * BlockSize / 1000), samplerate=SampleRate, device=self.device_id):

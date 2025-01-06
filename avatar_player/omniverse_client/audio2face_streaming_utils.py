@@ -90,7 +90,8 @@ def push_audio_track_stream(url, audio_data, samplerate, instance_name):
         request_generator = make_generator()
         #print("Sending audio data...")
         # Then we send messages with audio_data
-        response = stub.PushAudioStream(request_generator)
+        response = stub.PushAudioStream.future(request_generator)
+        response = response.result()
         if response.success:
             #print("SUCCESS")                    
             pass
