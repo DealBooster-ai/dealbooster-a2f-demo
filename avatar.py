@@ -30,7 +30,8 @@ if args.asr_model == 'whitemouse84/whisper-base-ru': prompt = INITIAL_PROMPT_RU
 avatar_player = AvatarPlayer(
     brain=DifyBrains(api_key=args.dify_key, endpoint=args.dify_endpoint),
     tts_engine=ElevenLabsMultilingual(voice_id=args.voice),
-    asr=WhisperHF(model=args.asr_model, device_id=args.mic, prompt=prompt)
+    asr=WhisperHF(model=args.asr_model, device_id=args.mic, prompt=prompt),
+    sentence_chunking=False
 )
 
 avatar_player.active = ACTIVE_AT_START
